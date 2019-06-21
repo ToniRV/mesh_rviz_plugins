@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<package>
+  <name>mesh_rviz_plugins</name>
+  <version>1.0.0</version>
+  <description>ROS bindings for flame.</description>
+  <maintainer email="wng@csail.mit.edu">W. Nicholas Greene</maintainer>
+  <license>GPLv3</license>
+  <url type="website">https://github.com/robustrobotics/flame_ros</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>boost</build_depend>
+  <build_depend>libpcl-all-dev</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>pcl_msgs</build_depend>
+  <build_depend>pcl_conversions</build_depend>
+  <build_depend>nodelet</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>image_geometry</build_depend>
+  <build_depend>camera_info_manager</build_depend>
+  <build_depend>rviz</build_depend>
+
+  <run_depend>boost</run_depend>
+  <run_depend>libpcl-all-dev</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>pcl_msgs</run_depend>
+  <run_depend>pcl_conversions</run_depend>
+  <run_depend>nodelet</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>camera_info_manager_py</run_depend>
+  <run_depend>message_generation</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>image_geometry</run_depend>
+  <run_depend>camera_info_manager</run_depend>
+  <run_depend>rviz</run_depend>
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+    <rviz plugin="${prefix}/mesh_rviz_plugins.xml"/>
+  </export>
+</package>
