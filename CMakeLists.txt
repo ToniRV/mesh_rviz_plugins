@@ -8,7 +8,6 @@ if (CCACHE_FOUND)
 endif (CCACHE_FOUND)
 
 project(mesh_rviz_plugins)
-
 add_definitions("-std=c++11")
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
@@ -44,9 +43,11 @@ pkg_check_modules(YAML_CPP REQUIRED yaml-cpp>=0.5)
 ############# RVIZ #######################
   pkg_check_modules(OGRE OGRE)
 
+  # This setting causes Qt's "MOC" generation to happen automatically.
+  set(CMAKE_AUTOMOC ON)
+
   ## This plugin includes Qt widgets, so we must include Qt like so:
   ## We'll use the version that rviz used so they are compatible.
-  set(CMAKE_AUTOMOC ON) # This setting causes Qt's "MOC" generation to happen automatically.
   if(rviz_QT_VERSION VERSION_LESS "5")
     message(STATUS "Using Qt4 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
     find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
@@ -87,7 +88,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(./src
+include_directories(include
   ${EIGEN3_INCLUDE_DIRS}
   ${YAML_CPP_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
@@ -95,7 +96,40 @@ include_directories(./src
   ${Sophus_INCLUDE_DIRS}
   ${catkin_INCLUDE_DIRS})
 
-add_definitions("-std=c++11")
 add_definitions(${PCL_DEFINITIONS})
 
-add_subdirectory(./src)
+set(MOC_FILES include/mesh_rviz_plugins/textured_mesh_display.h)
+add_library(mesh_rviz_plugins
+  include/mesh_rviz_plugins/visual.h
+  include/mesh_rviz_plugins/textured_mesh_visual.h
+  include/mesh_rviz_plugins/surface_normals_visual.h
+  src/textured_mesh_display.cc
+  src/textured_mesh_visual.cc
+  src/surface_normals_visual.cc
+  ${MOC_FILES})
+
+
+## Add cmake target dependencies of the executable/library
+## as an example, message headers may need to be generated before nodes
+# add_dependencies(mesh_rviz_plugins_node mesh_rviz_plugins_generate_messages_cpp)
+add_dependencies(mesh_rviz_plugins
+  pcl_msgs_generate_messages_cpp)
+
+target_link_libraries(mesh_rviz_plugins
+  ${OGRE_LIBRARIES}
+  ${QT_LIBRARIES}
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBS})
+
+install(
+  FILES mesh_rviz_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+install(
+  DIRECTORY icons/
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/icons)
+
+install(TARGETS mesh_rviz_plugins
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

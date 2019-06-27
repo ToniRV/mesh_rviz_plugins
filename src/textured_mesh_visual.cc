@@ -20,7 +20,7 @@
  * @date 2017-02-21 20:53:05 (Tue)
  */
 
-#include "textured_mesh_visual.h"
+#include "mesh_rviz_plugins/textured_mesh_visual.h"
 
 #include <thread>
 
@@ -242,7 +242,12 @@ setFromMessage(const pcl_msgs::PolygonMesh::ConstPtr& mesh_msg,
   /*==================== Update mesh texture. ====================*/
   if ((shader_program_ == ShaderProgram::TEXTURE) && (tex_msg != nullptr)) {
     // Decompress image.
-    tex_img_ = cv_bridge::toCvCopy(tex_msg, "rgb8")->image;
+    try {
+      tex_img_ = cv_bridge::toCvCopy(tex_msg, "rgb8")->image;
+    } catch (cv_bridge::Exception& e) {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+    }
     updateTexture(mesh_material_, tex_img_);
   } else if ((shader_program_ == ShaderProgram::TEXTURE) && (tex_msg == nullptr)) {
     ROS_ERROR("ShaderProgram set to TEXTURE, but texture message is NULL!");

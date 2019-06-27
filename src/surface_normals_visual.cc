@@ -20,7 +20,7 @@
  * @date 2017-03-25 19:22:59 (Sat)
  */
 
-#include "surface_normals_visual.h"
+#include "mesh_rviz_plugins/surface_normals_visual.h"
 
 #include <string>
 
