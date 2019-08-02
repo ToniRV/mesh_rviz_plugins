@@ -35,8 +35,8 @@
 
 #include <image_transport/subscriber_plugin.h>
 
-#include "mesh_rviz_plugins/textured_mesh_visual.h"
 #include "mesh_rviz_plugins/surface_normals_visual.h"
+#include "mesh_rviz_plugins/textured_mesh_visual.h"
 
 namespace mesh_rviz_plugins {
 
@@ -88,7 +88,10 @@ TexturedMeshDisplay::TexturedMeshDisplay()
   polygon_mode_prop_.addOptionStd("SOLID", static_cast<int>(Ogre::PM_SOLID));
 
   // Point size property.
-  point_size_prop_.setMin(1);
+  point_size_prop_.setMin(1u);
+
+  // Normal size property.
+  normal_size_prop_.setMin(0.0f);
 
   // Add shader enums.
   shader_program_prop_.addOptionStd(
@@ -121,7 +124,7 @@ TexturedMeshDisplay::TexturedMeshDisplay()
   tex_transport_prop_->setStdString("raw");
 
   // Queue size property
-  queue_size_prop_.setMin(1);
+  queue_size_prop_.setMin(1u);
   queue_size_ = queue_size_prop_.getInt();
 
   return;

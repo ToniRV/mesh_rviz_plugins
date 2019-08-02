@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>mesh_rviz_plugins</name>
   <version>1.0.0</version>
   <description>ROS bindings for flame.</description>
@@ -8,38 +8,29 @@
   <url type="website">https://github.com/robustrobotics/flame_ros</url>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
 
-  <build_depend>boost</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>nav_msgs</build_depend>
-  <build_depend>pcl_ros</build_depend>
-  <build_depend>pcl_msgs</build_depend>
-  <build_depend>pcl_conversions</build_depend>
-  <build_depend>nodelet</build_depend>
-  <build_depend>cv_bridge</build_depend>
-  <build_depend>message_generation</build_depend>
-  <build_depend>image_geometry</build_depend>
-  <build_depend>camera_info_manager</build_depend>
-  <build_depend>rviz</build_depend>
+  <depend>Boost</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
 
-  <run_depend>boost</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>nav_msgs</run_depend>
-  <run_depend>pcl_ros</run_depend>
-  <run_depend>pcl_msgs</run_depend>
-  <run_depend>pcl_conversions</run_depend>
-  <run_depend>nodelet</run_depend>
-  <run_depend>cv_bridge</run_depend>
-  <run_depend>camera_info_manager_py</run_depend>
-  <run_depend>message_generation</run_depend>
-  <run_depend>message_runtime</run_depend>
-  <run_depend>image_geometry</run_depend>
-  <run_depend>camera_info_manager</run_depend>
-  <run_depend>rviz</run_depend>
+  <depend>pcl_ros</depend>
+  <depend>pcl_msgs</depend>
+  <depend>pcl_conversions</depend>
+
+<!--
+  <depend>libpcl-all-dev</depend>
+  -->
+
+  <depend>nodelet</depend>
+  <depend>cv_bridge</depend>
+  <depend>message_generation</depend>
+  <depend>message_runtime</depend>
+  <depend>image_geometry</depend>
+  <depend>camera_info_manager</depend>
+  <depend>rviz</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
