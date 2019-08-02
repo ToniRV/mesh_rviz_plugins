@@ -30,7 +30,7 @@
 
 #include <pcl_msgs/PolygonMesh.h>
 
-#include <visual.h>
+#include "mesh_rviz_plugins/visual.h"
 
 namespace Ogre {
 class SceneNode;

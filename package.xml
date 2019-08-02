@@ -3,7 +3,7 @@
   <name>mesh_rviz_plugins</name>
   <version>1.0.0</version>
   <description>ROS bindings for flame.</description>
-  <maintainer email="wng@csail.mit.edu">W. Nicholas Greene</maintainer>
+  <maintainer email="arosinol@mit.edu">Antoni Rosinol</maintainer>
   <license>GPLv3</license>
   <url type="website">https://github.com/robustrobotics/flame_ros</url>
 

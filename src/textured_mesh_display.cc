@@ -20,7 +20,7 @@
  * @date 2017-02-21 15:52:08 (Tue)
  */
 
-#include "textured_mesh_display.h"
+#include "mesh_rviz_plugins/textured_mesh_display.h"
 
 #include <vector>
 
@@ -35,8 +35,8 @@
 
 #include <image_transport/subscriber_plugin.h>
 
-#include "surface_normals_visual.h"
-#include "textured_mesh_visual.h"
+#include "mesh_rviz_plugins/textured_mesh_visual.h"
+#include "mesh_rviz_plugins/surface_normals_visual.h"
 
 namespace mesh_rviz_plugins {
 
