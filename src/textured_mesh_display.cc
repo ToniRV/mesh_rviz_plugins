@@ -35,62 +35,72 @@
 
 #include <image_transport/subscriber_plugin.h>
 
-#include "textured_mesh_visual.h"
 #include "surface_normals_visual.h"
+#include "textured_mesh_visual.h"
 
 namespace mesh_rviz_plugins {
 
-TexturedMeshDisplay::TexturedMeshDisplay() :
-    rviz::Display(),
-    mesh_filter_(nullptr),
-    num_meshes_received_(0),
-    tex_it_(nullptr),
-    tex_filter_(nullptr),
-    mesh_queue_(),
-    tex_queue_(),
-    visual_(nullptr),
-    normals_(nullptr),
-    mesh_topic_prop_("PolygonMesh Topic", "", "", "", this, SLOT(updateTopic())),
-    tex_topic_prop_("Texture topic", "", "", "", this, SLOT(updateTopic())),
-    tex_transport_prop_(new rviz::EnumProperty("Texture Transport Hint", "raw",
-                                               "Preferred method of sending images.",
-                                               this, SLOT(updateTopic()))),
-    polygon_mode_prop_("Polygon Mode", "", "Polygon rendering mode.",
-                       this, SLOT(updatePolygonMode())),
-    shader_program_prop_("Shader Program", "", "Shader program for mesh.",
-                   this, SLOT(updateShaderProgram())),
-    phong_shading_prop_("Phong Shading", true, "Use Phong Shading.", this,
-                        SLOT(updatePhongShading())),
-    scene_color_scale_prop_("Scene Color Scale", 1.0f, "Color scale for shaders.",
-                            this, SLOT(updateSceneColorScale())),
-    show_normals_prop_("Show Normals", false, "Show normal vectors.", this,
-                       SLOT(updateShowNormals())),
-    normal_size_prop_("Normal Size", 0.05f, "Size of normal vector lines.",
-                      this, SLOT(updateNormalSize())),
-    queue_size_prop_("Queue Size", 25,
-                     "Advanced: set the size of the incoming message queue.  Increasing this "
-                     "is useful if your incoming TF data is delayed significantly from your"
-                     " image data, but it can greatly increase memory usage if the messages are big.",
-                     this, SLOT(updateQueueSize())),
-    transport_plugin_types_(),
-    mtx_() {
+TexturedMeshDisplay::TexturedMeshDisplay()
+    : rviz::Display(),
+      mesh_filter_(nullptr),
+      num_meshes_received_(0),
+      tex_it_(nullptr),
+      tex_filter_(nullptr),
+      mesh_queue_(),
+      tex_queue_(),
+      visual_(nullptr),
+      normals_(nullptr),
+      mesh_topic_prop_("PolygonMesh Topic", "", "", "", this,
+                       SLOT(updateTopic())),
+      tex_topic_prop_("Texture topic", "", "", "", this, SLOT(updateTopic())),
+      tex_transport_prop_(new rviz::EnumProperty(
+          "Texture Transport Hint", "raw",
+          "Preferred method of sending images.", this, SLOT(updateTopic()))),
+      polygon_mode_prop_("Polygon Mode", "", "Polygon rendering mode.", this,
+                         SLOT(updatePolygonMode())),
+      point_size_prop_("Point Size", 1, "Set vertex size.", this,
+                       SLOT(updatePointSize())),
+      shader_program_prop_("Shader Program", "", "Shader program for mesh.",
+                           this, SLOT(updateShaderProgram())),
+      phong_shading_prop_("Phong Shading", true, "Use Phong Shading.", this,
+                          SLOT(updatePhongShading())),
+      scene_color_scale_prop_("Scene Color Scale", 1.0f,
+                              "Color scale for shaders.", this,
+                              SLOT(updateSceneColorScale())),
+      show_normals_prop_("Show Normals", false, "Show normal vectors.", this,
+                         SLOT(updateShowNormals())),
+      normal_size_prop_("Normal Size", 0.05f, "Size of normal vector lines.",
+                        this, SLOT(updateNormalSize())),
+      queue_size_prop_("Queue Size", 25,
+                       "Advanced: set the size of the incoming message queue.  "
+                       "Increasing this "
+                       "is useful if your incoming TF data is delayed "
+                       "significantly from your"
+                       " image data, but it can greatly increase memory usage "
+                       "if the messages are big.",
+                       this, SLOT(updateQueueSize())),
+      transport_plugin_types_(),
+      mtx_() {
   /* Add polygon mode enums. */
-  polygon_mode_prop_.addOptionStd("POINTS",
-                                  static_cast<int>(Ogre::PM_POINTS));
+  polygon_mode_prop_.addOptionStd("POINTS", static_cast<int>(Ogre::PM_POINTS));
   polygon_mode_prop_.addOptionStd("WIREFRAME",
                                   static_cast<int>(Ogre::PM_WIREFRAME));
-  polygon_mode_prop_.addOptionStd("SOLID",
-                                  static_cast<int>(Ogre::PM_SOLID));
+  polygon_mode_prop_.addOptionStd("SOLID", static_cast<int>(Ogre::PM_SOLID));
+
+  // Point size property.
+  point_size_prop_.setMin(1);
 
   // Add shader enums.
-  shader_program_prop_.addOptionStd("TEXTURE",
-                              static_cast<int>(TexturedMeshVisual::ShaderProgram::TEXTURE));
-  shader_program_prop_.addOptionStd("INVERSE_DEPTH",
-                              static_cast<int>(TexturedMeshVisual::ShaderProgram::INVERSE_DEPTH));
-  shader_program_prop_.addOptionStd("JET",
-                                    static_cast<int>(TexturedMeshVisual::ShaderProgram::JET));
-  shader_program_prop_.addOptionStd("SURFACE_NORMAL",
-                              static_cast<int>(TexturedMeshVisual::ShaderProgram::SURFACE_NORMAL));
+  shader_program_prop_.addOptionStd(
+      "TEXTURE", static_cast<int>(TexturedMeshVisual::ShaderProgram::TEXTURE));
+  shader_program_prop_.addOptionStd(
+      "INVERSE_DEPTH",
+      static_cast<int>(TexturedMeshVisual::ShaderProgram::INVERSE_DEPTH));
+  shader_program_prop_.addOptionStd(
+      "JET", static_cast<int>(TexturedMeshVisual::ShaderProgram::JET));
+  shader_program_prop_.addOptionStd(
+      "SURFACE_NORMAL",
+      static_cast<int>(TexturedMeshVisual::ShaderProgram::SURFACE_NORMAL));
 
   // Scene color scale property.
   scene_color_scale_prop_.setMin(0.0f);
@@ -168,11 +178,20 @@ void TexturedMeshDisplay::updatePolygonMode() {
   return;
 }
 
+void TexturedMeshDisplay::updatePointSize() {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  if (visual_ != nullptr) {
+    visual_->setPointSize(point_size_prop_.getInt());
+  }
+  return;
+}
+
 void TexturedMeshDisplay::updateShaderProgram() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   if (visual_ != nullptr) {
     TexturedMeshVisual::ShaderProgram sp =
-        static_cast<TexturedMeshVisual::ShaderProgram>(shader_program_prop_.getOptionInt());
+        static_cast<TexturedMeshVisual::ShaderProgram>(
+            shader_program_prop_.getOptionInt());
     visual_->setShaderProgram(sp);
   }
   return;
@@ -235,8 +254,9 @@ void TexturedMeshDisplay::fillTransportOptionList(EnumProperty* property) {
     const std::string& topic = tex_topic_prop_.getStdString();
 
     // cppcheck-suppress stlIfStrFind
-    if (topic_name.find(topic) == 0 && topic_name != topic && topic_name[topic.size()] == '/'
-        && topic_name.find('/', topic.size() + 1) == std::string::npos) {
+    if (topic_name.find(topic) == 0 && topic_name != topic &&
+        topic_name[topic.size()] == '/' &&
+        topic_name.find('/', topic.size() + 1) == std::string::npos) {
       std::string transport_type = topic_name.substr(topic.size() + 1);
 
       // If the transport type string found above is in the set of
@@ -258,10 +278,11 @@ void TexturedMeshDisplay::fillTransportOptionList(EnumProperty* property) {
 void TexturedMeshDisplay::scanForTransportSubscriberPlugins() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
-  pluginlib::ClassLoader<image_transport::SubscriberPlugin>
-      sub_loader("image_transport", "image_transport::SubscriberPlugin");
+  pluginlib::ClassLoader<image_transport::SubscriberPlugin> sub_loader(
+      "image_transport", "image_transport::SubscriberPlugin");
 
-  BOOST_FOREACH(const std::string& lookup_name, sub_loader.getDeclaredClasses()) {
+  BOOST_FOREACH (const std::string& lookup_name,
+                 sub_loader.getDeclaredClasses()) {
     // lookup_name is formatted as "pkg/transport_sub", for instance
     // "image_transport/compressed_sub" for the "compressed"
     // transport.  This code removes the "_sub" from the tail and
@@ -277,8 +298,9 @@ void TexturedMeshDisplay::scanForTransportSubscriberPlugins() {
       boost::shared_ptr<image_transport::SubscriberPlugin> sub =
           sub_loader.createInstance(lookup_name);
       transport_plugin_types_.insert(transport_name);
-    } catch (const pluginlib::LibraryLoadException& e) {}
-    catch (const pluginlib::CreateClassException& e) {}
+    } catch (const pluginlib::LibraryLoadException& e) {
+    } catch (const pluginlib::CreateClassException& e) {
+    }
   }
 
   return;
@@ -292,7 +314,8 @@ void TexturedMeshDisplay::subscribe() {
   }
 
   try {
-    mesh_filter_.reset(new message_filters::Subscriber<pcl_msgs::PolygonMesh>());
+    mesh_filter_.reset(
+        new message_filters::Subscriber<pcl_msgs::PolygonMesh>());
     tex_filter_.reset(new image_transport::SubscriberFilter());
 
     std::string mesh_topic = mesh_topic_prop_.getTopicStd();
@@ -303,8 +326,8 @@ void TexturedMeshDisplay::subscribe() {
     if (!mesh_topic.empty()) {
       // Subscribe to the mesh topic.
       mesh_filter_->subscribe(update_nh_, mesh_topic, queue_size_);
-      mesh_filter_->registerCallback(
-          boost::bind(&TexturedMeshDisplay::processPolygonMeshMessage, this, _1));
+      mesh_filter_->registerCallback(boost::bind(
+          &TexturedMeshDisplay::processPolygonMeshMessage, this, _1));
 
       if (!tex_topic.empty() && !tex_transport.empty()) {
         // Subscribe to texture topic.
@@ -316,7 +339,7 @@ void TexturedMeshDisplay::subscribe() {
     }
 
     setStatus(rviz::StatusProperty::Ok, "Topic", "OK");
-  } catch(ros::Exception& e) {
+  } catch (ros::Exception& e) {
     ROS_ERROR("Error subscribing: %s", e.what());
     setStatus(rviz::StatusProperty::Error, "Topic",
               QString("Error subscribing: ") + e.what());
@@ -366,8 +389,8 @@ void TexturedMeshDisplay::fixedFrameChanged() {
   return;
 }
 
-void TexturedMeshDisplay::
-processTextureMessage(const sensor_msgs::Image::ConstPtr& tex_msg) {
+void TexturedMeshDisplay::processTextureMessage(
+    const sensor_msgs::Image::ConstPtr& tex_msg) {
   ROS_DEBUG("Got a texture message at %f!\n", tex_msg->header.stamp.toSec());
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
@@ -386,8 +409,8 @@ processTextureMessage(const sensor_msgs::Image::ConstPtr& tex_msg) {
   return;
 }
 
-void TexturedMeshDisplay::
-processPolygonMeshMessage(const pcl_msgs::PolygonMesh::ConstPtr& msg) {
+void TexturedMeshDisplay::processPolygonMeshMessage(
+    const pcl_msgs::PolygonMesh::ConstPtr& msg) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
   ROS_DEBUG("Got a mesh message at %f!\n", msg->header.stamp.toSec());
@@ -407,7 +430,7 @@ processPolygonMeshMessage(const pcl_msgs::PolygonMesh::ConstPtr& msg) {
   // Synchronize and process the texture and mesh messages.
   pcl_msgs::PolygonMesh::ConstPtr mesh_msg;
   sensor_msgs::Image::ConstPtr tex_msg;
-  double tol = 5e-3; // 5 ms tolerance.
+  double tol = 5e-3;  // 5 ms tolerance.
   while ((tex_queue_.size() > 0) && (mesh_queue_.size() > 0)) {
     double tex_time = tex_queue_.front()->header.stamp.toSec();
     double mesh_time = mesh_queue_.front()->header.stamp.toSec();
@@ -437,9 +460,9 @@ processPolygonMeshMessage(const pcl_msgs::PolygonMesh::ConstPtr& msg) {
   return;
 }
 
-void TexturedMeshDisplay::
-processTexturedMeshMessages(const pcl_msgs::PolygonMesh::ConstPtr& mesh_msg,
-                            const sensor_msgs::Image::ConstPtr& tex_msg) {
+void TexturedMeshDisplay::processTexturedMeshMessages(
+    const pcl_msgs::PolygonMesh::ConstPtr& mesh_msg,
+    const sensor_msgs::Image::ConstPtr& tex_msg) {
   ROS_DEBUG("Got mesh and texture messages!\n");
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
@@ -457,20 +480,21 @@ processTexturedMeshMessages(const pcl_msgs::PolygonMesh::ConstPtr& mesh_msg,
     Ogre::PolygonMode pm =
         static_cast<Ogre::PolygonMode>(polygon_mode_prop_.getOptionInt());
     TexturedMeshVisual::ShaderProgram sp =
-        static_cast<TexturedMeshVisual::ShaderProgram>(shader_program_prop_.getOptionInt());
+        static_cast<TexturedMeshVisual::ShaderProgram>(
+            shader_program_prop_.getOptionInt());
 
     visual_ = std::make_shared<TexturedMeshVisual>(scene_manager_,
                                                    getSceneNode(), pm, sp);
     visual_->setSceneColorScale(scene_color_scale_prop_.getFloat());
+    visual_->setPointSize(point_size_prop_.getInt());
   }
 
   visual_->setFromMessage(mesh_msg, tex_msg);
 
   if (normals_ == nullptr) {
-    normals_ = std::make_shared<SurfaceNormalsVisual>(scene_manager_,
-                                                      getSceneNode(),
-                                                      Ogre::ColourValue::Red,
-                                                      normal_size_prop_.getFloat());
+    normals_ = std::make_shared<SurfaceNormalsVisual>(
+        scene_manager_, getSceneNode(), Ogre::ColourValue::Red,
+        normal_size_prop_.getFloat());
   }
 
   normals_->setFromMessage(mesh_msg);
@@ -478,8 +502,8 @@ processTexturedMeshMessages(const pcl_msgs::PolygonMesh::ConstPtr& mesh_msg,
   return;
 }
 
-void TexturedMeshDisplay::
-updateFixedFrameTransform(const std_msgs::Header& header) {
+void TexturedMeshDisplay::updateFixedFrameTransform(
+    const std_msgs::Header& header) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
   // Here we call the rviz::FrameManager to get the transform from the
@@ -488,8 +512,7 @@ updateFixedFrameTransform(const std_msgs::Header& header) {
   // The frame in the msg header should be the camera RDF world frame.
   Ogre::Quaternion orientation;
   Ogre::Vector3 position;
-  if (!context_->getFrameManager()->getTransform(header.frame_id,
-                                                 header.stamp,
+  if (!context_->getFrameManager()->getTransform(header.frame_id, header.stamp,
                                                  position, orientation)) {
     ROS_DEBUG("Error transforming from frame '%s' to frame '%s'",
               header.frame_id.c_str(), qPrintable(fixed_frame_));

@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -62,10 +63,10 @@ class TexturedMeshVisual final : public Visual {
    * @Brief Shader program for the mesh.
    */
   enum ShaderProgram {
-    TEXTURE, // Use texture.
-    INVERSE_DEPTH, // Color by inverse depth.
-    JET, // Color by inverse depth using jet colormap.
-    SURFACE_NORMAL // Color by surface normal.
+    TEXTURE,        // Use texture.
+    INVERSE_DEPTH,  // Color by inverse depth.
+    JET,            // Color by inverse depth using jet colormap.
+    SURFACE_NORMAL  // Color by surface normal.
   };
 
   /**
@@ -74,12 +75,13 @@ class TexturedMeshVisual final : public Visual {
    * @param[in] scene_manager The Ogre scene manager.
    * @param[in] parent_node The parent scene node in the Ogre scene graph.
    * @param[in] poly_mode The default polygon mode to draw the mesh.
-   * @param[in] shader_program The default fragment shader program to draw the mesh.
+   * @param[in] shader_program The default fragment shader program to draw the
+   * mesh.
    */
-  TexturedMeshVisual(Ogre::SceneManager* scene_manager,
-                     Ogre::SceneNode* parent_node,
-                     Ogre::PolygonMode poly_mode = Ogre::PM_WIREFRAME,
-                     ShaderProgram shader_program = ShaderProgram::INVERSE_DEPTH);
+  TexturedMeshVisual(
+      Ogre::SceneManager* scene_manager, Ogre::SceneNode* parent_node,
+      Ogre::PolygonMode poly_mode = Ogre::PM_WIREFRAME,
+      ShaderProgram shader_program = ShaderProgram::INVERSE_DEPTH);
   ~TexturedMeshVisual();
 
   TexturedMeshVisual(const TexturedMeshVisual& rhs) = delete;
@@ -125,6 +127,20 @@ class TexturedMeshVisual final : public Visual {
   }
 
   /**
+   * @brief Set the size of the vertices of the mesh.
+   *
+   * @param mode[in] New vertex size.
+   */
+  void setPointSize(size_t point_size) {
+    std::lock_guard<std::mutex> lock(*getMutex());
+    this->point_size_ = point_size;
+    if (mesh_material_.get() != nullptr) {
+      mesh_material_->getTechnique(0)->getPass(0)->setPointSize(point_size);
+    }
+    return;
+  }
+
+  /**
    * @brief Set the scene color scale for jet shader.
    */
   void setSceneColorScale(float scale) {
@@ -135,7 +151,7 @@ class TexturedMeshVisual final : public Visual {
       return;
     }
 
-    Ogre::Pass* pass  = mesh_material_->getTechnique(0)->getPass(0);
+    Ogre::Pass* pass = mesh_material_->getTechnique(0)->getPass(0);
     auto fparams = pass->getFragmentProgramParameters();
     fparams->setNamedConstant("scene_color_scale", scene_color_scale_);
 
@@ -153,7 +169,7 @@ class TexturedMeshVisual final : public Visual {
       return;
     }
 
-    Ogre::Pass* pass  = mesh_material_->getTechnique(0)->getPass(0);
+    Ogre::Pass* pass = mesh_material_->getTechnique(0)->getPass(0);
     auto fparams = pass->getFragmentProgramParameters();
     fparams->setNamedConstant("phong_shading", phong_shading_ ? 1 : 0);
 
@@ -229,11 +245,13 @@ class TexturedMeshVisual final : public Visual {
       "  vec3 view_dir = normalize(-frag_pos.xyz);\n"
       "  vec3 reflect_dir = reflect(light_dir, frag_normal);\n"
       "  int shininess = 32;"
-      "  float sfactor = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);\n"
+      "  float sfactor = pow(max(dot(view_dir, reflect_dir), 0.0), "
+      "shininess);\n"
       "  vec3 scolor = sfactor * specular_color;\n"
       ""
       "  if (phong_shading > 0) {\n"
-      "    frag_color = vec4((0.7*acolor + 0.2*dcolor + 0.1*scolor) * rgb, 1.0); \n"
+      "    frag_color = vec4((0.7*acolor + 0.2*dcolor + 0.1*scolor) * rgb, "
+      "1.0); \n"
       "  } else {\n"
       "    frag_color = vec4(rgb, 1.0);\n"
       "  }\n"
@@ -257,7 +275,8 @@ class TexturedMeshVisual final : public Visual {
       ""
       "void main() {\n"
       "  // Color from colormap.\n"
-      "  vec3 cmap = scene_color_scale * vec3(1.0/frag_depth, 1.0/frag_depth, 1.0/frag_depth);\n"
+      "  vec3 cmap = scene_color_scale * vec3(1.0/frag_depth, 1.0/frag_depth, "
+      "1.0/frag_depth);\n"
       ""
       "  // Ambient color.\n"
       "  vec3 acolor = ambient_color;\n"
@@ -270,11 +289,13 @@ class TexturedMeshVisual final : public Visual {
       "  vec3 view_dir = normalize(-frag_pos.xyz);\n"
       "  vec3 reflect_dir = reflect(light_dir, frag_normal);\n"
       "  int shininess = 32;"
-      "  float sfactor = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);\n"
+      "  float sfactor = pow(max(dot(view_dir, reflect_dir), 0.0), "
+      "shininess);\n"
       "  vec3 scolor = sfactor * specular_color;\n"
       ""
       "  if (phong_shading > 0) {\n"
-      "    frag_color = vec4((0.7*acolor + 0.2*dcolor + 0.1*scolor) * cmap, 1.0);\n"
+      "    frag_color = vec4((0.7*acolor + 0.2*dcolor + 0.1*scolor) * cmap, "
+      "1.0);\n"
       "  } else {\n"
       "    frag_color = vec4(cmap, 1.0);\n"
       "  }\n"
@@ -337,11 +358,13 @@ class TexturedMeshVisual final : public Visual {
       "  vec3 view_dir = normalize(-frag_pos.xyz);\n"
       "  vec3 reflect_dir = reflect(light_dir, frag_normal);\n"
       "  int shininess = 32;"
-      "  float sfactor = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);\n"
+      "  float sfactor = pow(max(dot(view_dir, reflect_dir), 0.0), "
+      "shininess);\n"
       "  vec3 scolor = sfactor * specular_color;\n"
       ""
       "  if (phong_shading > 0) {\n"
-      "    frag_color = vec4((0.7*acolor + 0.2*dcolor + 0.1*scolor) * cmap, 1.0);\n"
+      "    frag_color = vec4((0.7*acolor + 0.2*dcolor + 0.1*scolor) * cmap, "
+      "1.0);\n"
       "  } else {\n"
       "    frag_color = vec4(cmap, 1.0);\n"
       "  }\n"
@@ -363,7 +386,8 @@ class TexturedMeshVisual final : public Visual {
       "out vec4 frag_color;\n"
       "void main() {\n"
       "  // Color from colormap.\n"
-      "  vec3 cmap = vec3((frag_normal.x + 1)/2, (frag_normal.y + 1)/2, (127 * frag_normal.z + 127)/255);\n"
+      "  vec3 cmap = vec3((frag_normal.x + 1)/2, (frag_normal.y + 1)/2, (127 * "
+      "frag_normal.z + 127)/255);\n"
       ""
       "  // Ambient color.\n"
       "  vec3 acolor = ambient_color;\n"
@@ -376,11 +400,13 @@ class TexturedMeshVisual final : public Visual {
       "  vec3 view_dir = normalize(-frag_pos.xyz);\n"
       "  vec3 reflect_dir = reflect(light_dir, frag_normal);\n"
       "  int shininess = 32;"
-      "  float sfactor = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);\n"
+      "  float sfactor = pow(max(dot(view_dir, reflect_dir), 0.0), "
+      "shininess);\n"
       "  vec3 scolor = sfactor * specular_color;\n"
       ""
       "  if (phong_shading > 0) {\n"
-      "    frag_color = vec4((0.7*acolor + 0.2*dcolor + 0.1*scolor) * cmap, 1.0);\n"
+      "    frag_color = vec4((0.7*acolor + 0.2*dcolor + 0.1*scolor) * cmap, "
+      "1.0);\n"
       "  } else {\n"
       "    frag_color = vec4(cmap, 1.0);\n"
       "  }\n"
@@ -392,34 +418,40 @@ class TexturedMeshVisual final : public Visual {
                           const sensor_msgs::PointCloud2& cloud);
   void updateIndexBuffer(const Ogre::MeshPtr& mesh,
                          const std::vector<pcl_msgs::Vertices>& indices);
-  void updateTexture(const Ogre::MaterialPtr& material, const cv::Mat3b& tex_img);
+  void updateTexture(const Ogre::MaterialPtr& material,
+                     const cv::Mat3b& tex_img);
 
-  Ogre::MeshPtr mesh_; // Main mesh object.
-  std::string mesh_name_; // Ogre string for this mesh.
+  Ogre::MeshPtr mesh_;     // Main mesh object.
+  std::string mesh_name_;  // Ogre string for this mesh.
 
-  Ogre::Entity* entity_; // An instance of a mesh in the scene is called an entity.
-  std::string entity_name_; // Ogre string for this entity.
+  Ogre::Entity*
+      entity_;  // An instance of a mesh in the scene is called an entity.
+  std::string entity_name_;  // Ogre string for this entity.
 
-  Ogre::MaterialPtr mesh_material_; // Material for the mesh (how it's textured/lit/shaded/etc).
-  std::string material_name_; // Ogre string for this material.
+  Ogre::MaterialPtr mesh_material_;  // Material for the mesh (how it's
+                                     // textured/lit/shaded/etc).
+  std::string material_name_;        // Ogre string for this material.
 
-  cv::Mat3b tex_img_; // Texture image.
-  std::string tex_name_; // Texture name.
+  cv::Mat3b tex_img_;     // Texture image.
+  std::string tex_name_;  // Texture name.
 
-  Ogre::PolygonMode mode_; // Whether to draw as points, wireframe, or solid.
+  Ogre::PolygonMode mode_;  // Whether to draw as points, wireframe, or solid.
 
-  bool mesh_visibility_; // True if mesh should be visiable.
+  bool mesh_visibility_;  // True if mesh should be visiable.
 
-  float scene_color_scale_; // Parameter for color scale.
-  bool phong_shading_; // True if phong shading should be applied.
+  float scene_color_scale_;  // Parameter for color scale.
+  size_t point_size_;        // Size of the vertices of the mesh.
+  bool phong_shading_;       // True if phong shading should be applied.
 
-  ShaderProgram shader_program_; // Controls which fragment shader to use.
+  ShaderProgram shader_program_;  // Controls which fragment shader to use.
 
-  Ogre::HighLevelGpuProgramPtr vtx_shader_; // Main vertex shader.
-  Ogre::HighLevelGpuProgramPtr texture_shader_; // Image texture fragment shader.
-  Ogre::HighLevelGpuProgramPtr idepth_shader_; // IDepth fragment shader.
-  Ogre::HighLevelGpuProgramPtr jet_shader_; // Jet fragment shader.
-  Ogre::HighLevelGpuProgramPtr normal_shader_; // Normal vector fragment shader.
+  Ogre::HighLevelGpuProgramPtr vtx_shader_;  // Main vertex shader.
+  Ogre::HighLevelGpuProgramPtr
+      texture_shader_;  // Image texture fragment shader.
+  Ogre::HighLevelGpuProgramPtr idepth_shader_;  // IDepth fragment shader.
+  Ogre::HighLevelGpuProgramPtr jet_shader_;     // Jet fragment shader.
+  Ogre::HighLevelGpuProgramPtr
+      normal_shader_;  // Normal vector fragment shader.
 };
 
 }  // namespace mesh_rviz_plugins

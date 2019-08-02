@@ -23,11 +23,11 @@
 #pragma once
 
 #ifndef Q_MOC_RUN
-#include <string>
-#include <set>
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <set>
+#include <string>
 
 #include <OgreSceneManager.h>
 #include <OgreSceneNode.h>
@@ -40,11 +40,11 @@
 #include <rviz/display_context.h>
 #include <rviz/frame_manager.h>
 
-#include <rviz/properties/ros_topic_property.h>
-#include <rviz/properties/float_property.h>
-#include <rviz/properties/int_property.h>
 #include <rviz/properties/bool_property.h>
 #include <rviz/properties/enum_property.h>
+#include <rviz/properties/float_property.h>
+#include <rviz/properties/int_property.h>
+#include <rviz/properties/ros_topic_property.h>
 
 #include <rviz/display.h>
 
@@ -55,7 +55,7 @@
 
 namespace mesh_rviz_plugins {
 
-using rviz::EnumProperty; // Have to do this so that Qt can find the slot.
+using rviz::EnumProperty;  // Have to do this so that Qt can find the slot.
 
 class TexturedMeshVisual;
 class SurfaceNormalsVisual;
@@ -73,11 +73,10 @@ class SurfaceNormalsVisual;
  * The mesh can be shaded with different fragment shader programs (with and
  * without Phong shading) depending on your preferences.
  */
-class TexturedMeshDisplay: public rviz::Display {
- Q_OBJECT // NOLINT(whitespace/indent)
+class TexturedMeshDisplay : public rviz::Display {
+  Q_OBJECT  // NOLINT(whitespace/indent)
 
- public:
-  TexturedMeshDisplay();
+      public : TexturedMeshDisplay();
 
   void onInitialize();
 
@@ -85,10 +84,11 @@ class TexturedMeshDisplay: public rviz::Display {
 
   void reset();
 
- private Q_SLOTS: // NOLINT(whitespace/indent)
+ private Q_SLOTS:  // NOLINT(whitespace/indent)
   void updateTopic();
   void updateQueueSize();
   void updatePolygonMode();
+  void updatePointSize();
   void updateShaderProgram();
   void updatePhongShading();
   void updateSceneColorScale();
@@ -116,11 +116,13 @@ class TexturedMeshDisplay: public rviz::Display {
 
   void processTextureMessage(const sensor_msgs::Image::ConstPtr& tex_msg);
   void processPolygonMeshMessage(const pcl_msgs::PolygonMesh::ConstPtr& msg);
-  void processTexturedMeshMessages(const pcl_msgs::PolygonMesh::ConstPtr& mesh_msg,
-                                   const sensor_msgs::Image::ConstPtr& img_msg);
+  void processTexturedMeshMessages(
+      const pcl_msgs::PolygonMesh::ConstPtr& mesh_msg,
+      const sensor_msgs::Image::ConstPtr& img_msg);
 
   // Subscribes 'n stuff.
-  std::shared_ptr<message_filters::Subscriber<pcl_msgs::PolygonMesh> > mesh_filter_;
+  std::shared_ptr<message_filters::Subscriber<pcl_msgs::PolygonMesh> >
+      mesh_filter_;
   uint32_t num_meshes_received_;
 
   std::shared_ptr<image_transport::ImageTransport> tex_it_;
@@ -146,6 +148,7 @@ class TexturedMeshDisplay: public rviz::Display {
   rviz::FloatProperty scene_color_scale_prop_;
   rviz::BoolProperty show_normals_prop_;
   rviz::FloatProperty normal_size_prop_;
+  rviz::IntProperty point_size_prop_;
   rviz::IntProperty queue_size_prop_;
 
   int queue_size_;
