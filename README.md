@@ -20,7 +20,7 @@ echo 'source ~/catkin_ws/devel/setup.bash' >> ~/.bashrc
 
 # Clone repo
 cd ~/catkin_ws/src
-git clone git@github.mit.edu:SPARK/spark_vio_ros.git
+git clone https://github.com/ToniRV/mesh_rviz_plugins.git
 
 # Install dependencies from rosinstall file using wstool
 wstool init
