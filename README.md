@@ -1,7 +1,9 @@
 # mesh_rviz_plugins
 RVIZ plugins to display a textured 3D mesh, a refactoring of plugins in: https://github.com/robustrobotics/flame_ros
 
-![example_demo](./SparkVIO_ROS_mesh.gif)
+<div align="center">
+    <img src="docs/media/SparkVIO_ROS_mesh.gif">
+</div>
 
 ## Installation
 
