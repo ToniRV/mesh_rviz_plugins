@@ -319,7 +319,6 @@ void TexturedMeshDisplay::subscribe() {
   try {
     mesh_filter_.reset(
         new message_filters::Subscriber<pcl_msgs::PolygonMesh>());
-    tex_filter_.reset(new image_transport::SubscriberFilter());
 
     std::string mesh_topic = mesh_topic_prop_.getTopicStd();
     std::string tex_topic = tex_topic_prop_.getTopicStd();
@@ -333,6 +332,7 @@ void TexturedMeshDisplay::subscribe() {
           &TexturedMeshDisplay::processPolygonMeshMessage, this, _1));
 
       if (!tex_topic.empty() && !tex_transport.empty()) {
+        tex_filter_.reset(new image_transport::SubscriberFilter());
         // Subscribe to texture topic.
         tex_filter_->subscribe(*tex_it_, tex_topic, queue_size_,
                                image_transport::TransportHints(tex_transport));
@@ -433,8 +433,7 @@ void TexturedMeshDisplay::processPolygonMeshMessage(
   pcl_msgs::PolygonMesh::ConstPtr mesh_msg;
   sensor_msgs::Image::ConstPtr tex_msg;
   // If not using texture, publish only 3D Mesh.
-  static constexpr bool no_texture = true;
-  if (no_texture) {
+  if (!tex_filter_) {
     mesh_msg = mesh_queue_.front();
     mesh_queue_.pop();
     if (mesh_msg != nullptr) {
