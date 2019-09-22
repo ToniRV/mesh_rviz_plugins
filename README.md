@@ -37,4 +37,4 @@ source ~/.bashrc
 ## Usage & Example output
 
 After loading rviz whit this plugin, add a topic of type `TexturedMesh`, for which you can use a dropdown menu in rviz to subscribe to a point cloud `pcl_msgs` and an image for texture.
-Check usage and example output in [spark_vio_ros](https://github.mit.edu/SPARK/spark_vio_ros).
+Check usage and example output in [spark_vio_ros](https://github.com/MIT-SPARK/Kimera-VIO-ROS).
