@@ -17,8 +17,7 @@
  *
  * @file textured_mesh_visual.cc
  * @author W. Nicholas Greene
- * @date 2017-02-21 20:53:05 (Tue)
- */
+ * @date 2017-02-21 20:53:05 (Tue) */
 
 #include "mesh_rviz_plugins/textured_mesh_visual.h"
 
@@ -80,6 +79,7 @@ TexturedMeshVisual::TexturedMeshVisual(Ogre::SceneManager* scene_manager,
   pass->setLightingEnabled(false);
   pass->setPolygonMode(mode_);
   pass->setPointSize(point_size_);
+  pass->setCullingMode(Ogre::CULL_NONE);
 
   // pass->setAmbient(0.5, 0.5, 0.5);
   // pass->setDiffuse(0.5, 0.5, 0.5, 1.0);
@@ -257,11 +257,15 @@ void TexturedMeshVisual::setFromMessage(
     // Decompress image.
     try {
       tex_img_ = cv_bridge::toCvCopy(tex_msg, "rgb8")->image;
+      if (tex_img_.rows != 0 && tex_img_.cols != 0) {
+        updateTexture(mesh_material_, tex_img_);
+      } else {
+        ROS_ERROR("ShaderProgram set to Texture, but texture image is empty.");
+      }
     } catch (cv_bridge::Exception& e) {
       ROS_ERROR("cv_bridge exception: %s", e.what());
       return;
     }
-    updateTexture(mesh_material_, tex_img_);
   } else if ((shader_program_ == ShaderProgram::TEXTURE) &&
              (tex_msg == nullptr)) {
     ROS_ERROR("ShaderProgram set to TEXTURE, but texture message is NULL!");
@@ -395,6 +399,8 @@ void TexturedMeshVisual::updateIndexBuffer(
 
 void TexturedMeshVisual::updateTexture(const Ogre::MaterialPtr& material,
                                        const cv::Mat3b& tex_img) {
+  ROS_ASSERT(tex_img.cols > 0);
+  ROS_ASSERT(tex_img.rows > 0);
   Ogre::Image ogre_img;
   ogre_img.loadDynamicImage(tex_img.data, tex_img.cols, tex_img.rows,
                             Ogre::PixelFormat::PF_B8G8R8);
