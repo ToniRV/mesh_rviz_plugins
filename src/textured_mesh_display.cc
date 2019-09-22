@@ -430,32 +430,44 @@ void TexturedMeshDisplay::processPolygonMeshMessage(
     mesh_queue_.pop();
   }
 
-  // Synchronize and process the texture and mesh messages.
   pcl_msgs::PolygonMesh::ConstPtr mesh_msg;
   sensor_msgs::Image::ConstPtr tex_msg;
-  double tol = 5e-3;  // 5 ms tolerance.
-  while ((tex_queue_.size() > 0) && (mesh_queue_.size() > 0)) {
-    double tex_time = tex_queue_.front()->header.stamp.toSec();
-    double mesh_time = mesh_queue_.front()->header.stamp.toSec();
+  // If not using texture, publish only 3D Mesh.
+  static constexpr bool no_texture = true;
+  if (no_texture) {
+    mesh_msg = mesh_queue_.front();
+    mesh_queue_.pop();
+    if (mesh_msg != nullptr) {
+      processTexturedMeshMessages(mesh_msg, nullptr);
+    }
+  } else {
+    // Otherwise, if using texture
+    // Synchronize and process the texture and mesh messages.
+    double tol = 5e-3;  // 5 ms tolerance.
+    while ((tex_queue_.size() > 0) &&
+           (mesh_queue_.size() > 0)) {
+      double tex_time = tex_queue_.front()->header.stamp.toSec();
+      double mesh_time = mesh_queue_.front()->header.stamp.toSec();
 
-    if (std::fabs(tex_time - mesh_time) <= tol) {
-      mesh_msg = mesh_queue_.front();
-      tex_msg = tex_queue_.front();
-      mesh_queue_.pop();
-      tex_queue_.pop();
-      break;
-    } else {
-      if (tex_time < mesh_time) {
-        tex_queue_.pop();
-      } else {
+      if (std::fabs(tex_time - mesh_time) <= tol) {
+        mesh_msg = mesh_queue_.front();
+        tex_msg = tex_queue_.front();
         mesh_queue_.pop();
+        tex_queue_.pop();
+        break;
+      } else {
+        if (tex_time < mesh_time) {
+          tex_queue_.pop();
+        } else {
+          mesh_queue_.pop();
+        }
       }
     }
-  }
 
-  if ((mesh_msg != nullptr) && (tex_msg != nullptr)) {
-    ROS_DEBUG("Found a match!");
-    processTexturedMeshMessages(mesh_msg, tex_msg);
+    if ((mesh_msg != nullptr) && (tex_msg != nullptr)) {
+      ROS_DEBUG("Found a match!");
+      processTexturedMeshMessages(mesh_msg, tex_msg);
+    }
   }
 
   ROS_DEBUG("Processed a mesh message!\n");
@@ -469,7 +481,7 @@ void TexturedMeshDisplay::processTexturedMeshMessages(
   ROS_DEBUG("Got mesh and texture messages!\n");
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
-  if (!mesh_msg || !tex_msg) {
+  if (!mesh_msg) {
     return;
   }
 
