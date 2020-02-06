@@ -7,7 +7,12 @@ RVIZ plugins to display a textured 3D mesh, a refactoring of plugins in: https:/
 
 ## Installation
 
-Just clone in your workspace, catkin build it, source the workspace and use rviz as you would normally do.
+- Install ROS + the following dependencies: (change `melodic` for your ROS distribution):
+```bash
+sudo apt-get install ros-melodic-image-geometry ros-melodic-pcl-ros ros-melodic-cv-bridge
+```
+
+- Then, just clone in your workspace, catkin build it, source the workspace and use rviz as you would normally do.
 
 ```bash
 # Setup catkin workspace
