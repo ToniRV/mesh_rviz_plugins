@@ -1,0 +1,38 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index eb64d72..3de6a4e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -5,11 +5,12 @@ find_package(catkin_simple REQUIRED)
+ catkin_simple(ALL_DEPS_REQUIRED)
+ 
+ set(CMAKE_MACOSX_RPATH 0)
+-add_definitions(-std=c++11 -Wall)
++add_definitions(-std=c++14 -Wall)
+ 
+ ## System dependencies are found with CMake's conventions
+ find_package(PkgConfig REQUIRED)
+ pkg_check_modules(EIGEN3 REQUIRED eigen3>=3.2)
++find_package(OpenCV REQUIRED)
+ 
+ ############# RVIZ #######################
+   pkg_check_modules(OGRE OGRE)
+@@ -55,7 +56,8 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} ${SSE_FLAG
+ ## Specify additional locations of header files
+ ## Your package locations should be listed before other locations
+ include_directories(include
+-  ${EIGEN3_INCLUDE_DIRS})
++  ${EIGEN3_INCLUDE_DIRS}
++  ${OpenCV_INCLUDE_DIRS})
+ 
+ set(MOC_FILES include/mesh_rviz_plugins/textured_mesh_display.h)
+ cs_add_library(${PROJECT_NAME}
+@@ -76,7 +78,8 @@ add_dependencies(${PROJECT_NAME} pcl_msgs_generate_messages_cpp)
+ 
+ target_link_libraries(${PROJECT_NAME}
+   ${OGRE_LIBRARIES}
+-  ${QT_LIBRARIES})
++  ${QT_LIBRARIES}
++  ${OpenCV_LIBRARIES})
+ 
+ install(
+   FILES mesh_rviz_plugins.xml
