@@ -4,6 +4,8 @@ project(mesh_rviz_plugins)
 find_package(catkin_simple REQUIRED)
 catkin_simple(ALL_DEPS_REQUIRED)
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MACOSX_RPATH 0)
 add_definitions(-std=c++11 -Wall)
 
